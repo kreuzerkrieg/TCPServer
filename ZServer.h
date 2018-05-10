@@ -21,9 +21,24 @@ private:
 
         // attach callbacks for multiple command
         addSocket(fbzmq::RawZmqSocketPtr{*serverSocket}, ZMQ_POLLIN, [this](int) noexcept {
-            serverSocket.recvOne(serverConfiguration.readTimeout).then([this](auto &&msg) {
-                requestProcessor(msg).then([this](auto &&msg) { serverSocket.sendOne(msg); });
-            });
+            try {
+                serverSocket.recvOne(serverConfiguration.readTimeout).then([this](auto &&msg) {
+                    requestProcessor(msg).then([this](auto &&repMsg) {
+                        serverSocket.sendOne(repMsg);
+                    });
+                });
+            }
+            catch (const std::exception &ex) {
+                std::string err = "Failed to send response. Reason: ";
+                err += ex.what();
+                try {
+                    serverSocket.sendOne(fbzmq::Message::from(err).value());
+                }
+                catch (const std::exception &e) {
+                    std::cout << "Failed to send response. Reason: " << ex.what() << ". Original reason: " << err
+                              << std::endl;
+                }
+            }
         });
     }
 

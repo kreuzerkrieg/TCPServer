@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
     boost::uuids::random_generator gen;
     boost::uuids::uuid id = gen();
     auto clientId = boost::uuids::to_string(id);
+    std::cout << "Client ID: " << clientId << std::endl;
     std::string str = "Hello";
     auto i = 0ul;
     while (true) {
